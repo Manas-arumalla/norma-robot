@@ -33,8 +33,8 @@ function Navigation() {
 
   return (
     <div className="relative z-40 bg-surface-primary border-b-2 border-border-default">
-      <div className="px-4 py-2 flex items-center gap-4">
-        <Link to="/" className="group">
+      <div className="px-4 py-2 flex items-center gap-4 overflow-x-auto scrollbar-thin">
+        <Link to="/" className="group shrink-0">
           <img
             src="/logo.svg"
             alt="Station View"
@@ -42,7 +42,7 @@ function Navigation() {
             className="h-8 logo-first-load logo-invert opacity-80 transition-opacity duration-200 group-hover:opacity-100"
           />
         </Link>
-        <nav className="flex gap-4">
+        <nav className="flex gap-4 shrink-0">
           <Link
             to="/"
             className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
@@ -82,7 +82,7 @@ function Navigation() {
         </button>
 
         <span
-          className="text-[11px] font-mono text-text-muted"
+          className="text-[11px] font-mono text-text-muted shrink-0"
           title="Station build version and commit hash"
         >
           {`⎇ ${__STATION_VERSION__}`}

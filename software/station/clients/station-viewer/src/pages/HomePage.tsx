@@ -68,10 +68,10 @@ function HomePage() {
   return (
     <div className="flex-1 flex flex-col">
       <div className="relative z-20 bg-surface-primary border-b-2 border-border-default">
-        <div className="px-4 py-2 flex flex-wrap gap-x-4 gap-y-2 items-center">
+        <div className="px-4 py-2 flex items-center gap-4 overflow-x-auto scrollbar-thin">
           {connectionStats && (
             <>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <div className="flex items-center gap-2 px-2 py-1 bg-surface-secondary rounded border border-border-default">
                   <span className="text-text-label text-xs uppercase tracking-wide">Status</span>
                   <span className={`font-semibold uppercase text-xs ${getConnectionStatusColor(connectionStats.status)}`}>
@@ -79,7 +79,7 @@ function HomePage() {
                   </span>
                 </div>
                 {connectionStats.status === 'connected' && inferenceState?.st3215?.data?.buses && inferenceState.st3215.data.buses.length > 0 && (
-                  <div className="flex items-center gap-2 px-2 py-1 bg-surface-secondary rounded border border-border-default">
+                  <div className="hidden sm:flex items-center gap-2 px-2 py-1 bg-surface-secondary rounded border border-border-default">
                     <span className="text-text-label text-xs uppercase tracking-wide">FPS</span>
                     <span className={`font-bold text-xs font-mono ${connectionStats.isFpsReady ? getFPSColor(connectionStats.fps) : 'text-text-label'}`}>
                       {connectionStats.isFpsReady ? `${connectionStats.fps.toFixed(1)} Hz` : '--'}
@@ -104,7 +104,7 @@ function HomePage() {
                   TAG
                 </button>
               </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-mono">
+              <div className="flex items-center gap-x-4 gap-y-1 text-xs font-mono shrink-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-text-muted">Endpoint:</span>
                   <span className="text-accent-data">{connectionStats.endpoint}</span>
