@@ -8,7 +8,7 @@ use crate::st3215_proto::{
 };
 use bytes::{Bytes, BytesMut};
 use log::warn;
-use log::{error, info};
+use log::{debug, error, info};
 use parking_lot::Mutex;
 use prost::Message;
 use std::collections::{HashMap, HashSet};
@@ -156,7 +156,7 @@ impl St3215Port {
                     let latency_ns = now_ns.saturating_sub(command.monotonic_stamp_ns);
                     let latency_ms = latency_ns as f64 / 1_000_000.0;
 
-                    info!("Received ST3215 command for port {} (latency: {:.2}ms): TxEnvelope {{ monotonic_stamp_ns: {}, local_stamp_ns: {}, app_start_id: {}, target_bus_serial: {:?}, command_id: {:02X?}, write: {:?}, reg_write: {:?}, action: {:?}, reset: {:?}, reset_calibration: {:?}, freeze_calibration: {:?}, auto_calibrate: {:?}, sync_write: {:?} }}",
+                    debug!("Received ST3215 command for port {} (latency: {:.2}ms): TxEnvelope {{ monotonic_stamp_ns: {}, local_stamp_ns: {}, app_start_id: {}, target_bus_serial: {:?}, command_id: {:02X?}, write: {:?}, reg_write: {:?}, action: {:?}, reset: {:?}, reset_calibration: {:?}, freeze_calibration: {:?}, auto_calibrate: {:?}, sync_write: {:?} }}",
                         bus_info.port_name, latency_ms, command.monotonic_stamp_ns, command.local_stamp_ns, command.app_start_id, command.target_bus_serial, command.command_id, command.write, command.reg_write, command.action, command.reset, command.reset_calibration, command.freeze_calibration, command.auto_calibrate, command.sync_write);
 
                     let motor_id = command.get_motor_id().unwrap_or(0);

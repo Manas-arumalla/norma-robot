@@ -401,7 +401,7 @@ impl ST3215BusCommunicator {
         if motor_id == 254 {
             // BROADCAST_ID
             if let Some(sync_write) = &command.sync_write {
-                log::info!(
+                log::debug!(
                     "Updating command result for SyncWrite - {} motors, command_id: {:02X?}, result: {:?}",
                     sync_write.motors.len(),
                     command.command_id,
@@ -424,7 +424,7 @@ impl ST3215BusCommunicator {
                             });
                         }
                     }
-                    log::info!(
+                    log::debug!(
                         "Updated SyncWrite command state for {} motors, command_id: {:02X?}",
                         sync_write.motors.len(),
                         command.command_id
@@ -437,7 +437,7 @@ impl ST3215BusCommunicator {
         }
 
         // Single motor command
-        log::info!(
+        log::debug!(
             "Updating command result for motor {}, command_id: {:02X?}, result: {:?}",
             motor_id,
             command.command_id,
@@ -456,7 +456,7 @@ impl ST3215BusCommunicator {
                     command: Some(command.clone()),
                     result: result as i32,
                 });
-                log::info!(
+                log::debug!(
                     "Successfully updated command state for motor {}, command_id: {:02X?}",
                     motor_id,
                     command.command_id

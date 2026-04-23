@@ -72,7 +72,7 @@ impl St3215Driver {
             Box::new(move |entries: &[(normfs::UintN, bytes::Bytes)]| {
                 for (_, data) in entries {
                     if let Ok(pack) = commands::StationCommandsPack::decode(data.as_ref()) {
-                        log::info!("Received command: {:?}", pack.pack_id);
+                        log::debug!("Received command: {:?}", pack.pack_id);
                         for cmd in &pack.commands {
                             if cmd.r#type() != drivers::StationCommandType::StcSt3215Command {
                                 continue;
