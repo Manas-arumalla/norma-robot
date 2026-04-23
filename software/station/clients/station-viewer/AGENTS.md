@@ -8,7 +8,7 @@ Guidelines for AI coding agents operating in this React/TypeScript project.
 yarn dev              # Start Vite dev server (http://localhost:5173)
 yarn build            # Full build: hashes, proto, type-check, and Vite build
 yarn build:proto      # Regenerate protobuf bindings from ../../../../../protobufs
-yarn lint             # Run ESLint with flat config
+yarn lint             # Run oxlint (Rust-based linter)
 yarn type-check       # Run TypeScript compiler without emitting
 yarn preview          # Preview production build locally
 ```
@@ -24,31 +24,41 @@ yarn preview          # Preview production build locally
 - **Three.js** for 3D rendering (URDF robot visualization)
 - **Protobuf.js** for binary protocol communication
 - **React Router v7** for routing with lazy-loaded pages
+- **oxlint** for linting (fast Rust-based linter)
+- **lucide-react** for icons
+- **urdf-loader** for loading URDF robot models
+- **nosleep.js** for screen wake lock
 
 ## Project Structure
 
 ```
 src/
-  api/          # WebSocket, protobuf, time sync, queue utilities
-  components/   # Shared UI components
-  hooks/        # Custom React hooks (re-exported from index.ts)
-  pages/        # Route components (suffixed with Page)
-  st3215/       # Motor driver components and utilities
-  usbvideo/     # Camera/video stream components
+  api/            # WebSocket, protobuf, time sync, queue, normfs, commands, clipboard, frame parsing
+  components/     # Shared UI components
+    history/      # History page detail views (ExpandedView, HistoryElement, etc.)
+  hooks/          # Custom React hooks (re-exported from index.ts)
+  pages/          # Route components (suffixed with Page)
+  st3215/         # Motor driver components, utilities, and robot renderers
+  usbvideo/       # Camera/video stream components
+  utils/          # Shared utilities (asset-hashes, format-bytes, tag-phrases)
 public/
-  so101/        # Robot URDF models and STL assets
+  so101/          # SO101 robot URDF models and STL assets
+  elrobot/        # ElRobot URDF models and STL assets
 ```
 
 ## Code Style
 
 ### Imports
-Use `@/*` path aliases. Order: external deps → `@/api/*` → `@/components/*` → `@/hooks` → types
+Use `@/*` path aliases. Order: external deps → `@/api/*` → `@/components/*` → `@/hooks` → types.
+
+Some internal imports use `.js` extensions (required for ESM module resolution):
 
 ```typescript
 import { forwardRef, memo, useImperativeHandle, useRef } from 'react';
 import Long from 'long';
 import webSocketManager from '@/api/websocket';
 import { serverToLocal } from '@/api/timestamp-utils';
+import { st3215 } from '@/api/proto.js';
 import Timeline from '@/components/Timeline';
 import { useFrameData, useTimelineState } from '@/hooks';
 ```
@@ -56,7 +66,7 @@ import { useFrameData, useTimelineState } from '@/hooks';
 ### Formatting & Linting
 - 2-space indentation, semicolons required
 - `src/api/proto.*` files are auto-generated and excluded from linting
-- ESLint flat config enforces rules
+- oxlint enforces rules (see `.oxlintrc.json`)
 
 ### Naming Conventions
 
@@ -76,6 +86,9 @@ import { useFrameData, useTimelineState } from '@/hooks';
 ## Component Patterns
 
 ### Function Components
+Two accepted patterns:
+
+**Pattern 1 — Explicit memo + forwardRef** (used for complex/re-rendered components):
 ```typescript
 interface TimelineControlsProps {
   state: TimelineState;
@@ -94,17 +107,46 @@ TimelineControls.displayName = 'TimelineControls';
 export default TimelineControls;
 ```
 
+**Pattern 2 — React.FC** (used for simpler components):
+```typescript
+const MainLayout: React.FC = () => {
+  // ...
+};
+export default MainLayout;
+```
+
+**Pattern 3 — Inline memo** (alternative shorthand):
+```typescript
+const BusViewer = memo(function BusViewer({ ... }: BusViewerProps) {
+  // ...
+});
+export default BusViewer;
+```
+
+Conventions:
 - Use function components only
 - All components use default exports
 - Define props interfaces directly above the component
-- Wrap components that receive props with `memo()`
+- Use `memo()` for components with complex props that re-render frequently (e.g., timeline components)
 - Use `forwardRef` when exposing imperative handles
 - Route components are lazy-loaded: `const HomePage = lazy(() => import('./pages/HomePage'));`
+
+## Routes
+
+```typescript
+// MainLayout wraps Home and History pages
+<Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
+<Route path="/history" element={<MainLayout><HistoryPage /></MainLayout>} />
+
+// Standalone pages
+<Route path="/st3215-bus-calibration" element={<St3215BusCalibrationPage />} />
+<Route path="/st3215-bind-motors" element={<St3215MotorConfigPage />} />
+```
 
 ## Hook Patterns
 
 ### State/Actions Pattern
-Complex hooks return separate state and actions objects:
+Complex stateful hooks return separate state and actions objects:
 
 ```typescript
 export interface UseTimelineStateReturn {
@@ -133,6 +175,8 @@ export function useTimelineState(): UseTimelineStateReturn {
 }
 ```
 
+Simpler hooks return plain values or flat objects (e.g., `useInferenceState` returns `Frame | null`, `useFrameData` returns `{ currentFrame, parsedFrame, isLoading, ... }`).
+
 ### useEffect Cleanup
 Always clean up event listeners, timers, and subscriptions:
 
@@ -145,10 +189,20 @@ useEffect(() => {
 ```
 
 ### Hook Exports
-All hooks are re-exported from `src/hooks/index.ts`:
+All hooks are re-exported from `src/hooks/index.ts` (11 hooks + 3 types):
 ```typescript
 export { useInferenceState } from "./useInferenceState";
-export { useConnectionStats } from "./useConnectionStats";
+export { useLatestEntryId } from "./useLatestEntryId";
+export { useConnectionStats, useConnectionStatsWithUptime } from "./useConnectionStats";
+export { useFrameData } from "./useFrameData";
+export { useQueueEntries } from "./useQueueEntries";
+export { useTimelineState } from "./useTimelineState";
+export { useStartupMarkers } from "./useStartupMarkers";
+export { useInferenceTags, invalidateTagsCache } from "./useInferenceTags";
+export { useKeyboardNavigation } from "./useKeyboardNavigation";
+export { useWakeLock } from "./useWakeLock";
+export { useBusMonitor } from "./useBusMonitor";
+// Plus type exports: TimelineControlsRef, UseWakeLockReturn, BusStatus, ErrorPacketDump
 ```
 
 ## Error Handling
@@ -197,6 +251,11 @@ const webSocketManager = new WebSocketManager(`ws://${host}/api`);
 export default webSocketManager;
 ```
 
+The WebSocket manager is initialized at app startup via side-effect import in `main.tsx`:
+```typescript
+import './api/websocket.ts';
+```
+
 ## WebSocket Configuration
 
 The dev server proxies `/api` to the robot backend. Update `vite.config.ts` to change the target:
@@ -206,6 +265,13 @@ proxy: {
   '/api': {
     target: 'ws://localhost:8889',
     ws: true,
+    changeOrigin: false,
   }
 }
 ```
+
+## Build Notes
+
+- `yarn build:hashes` generates `src/assets-manifest.json` for cache-busting (used by `src/utils/asset-hashes.ts`)
+- `__STATION_VERSION__` global is defined at build time (workspace version + git hash) — declared in `vite-env.d.ts`, used in `Navigation.tsx`
+- Vite is configured with `vite-plugin-compression` for gzip output
