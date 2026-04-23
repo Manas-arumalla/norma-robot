@@ -19,8 +19,9 @@ use tokio::sync::mpsc;
 use tokio_serial::SerialPortBuilderExt;
 use tokio_serial::SerialPortInfo;
 
-pub const ST3215_TIMEOUT_MS: u64 = 100;
-pub const ST3215_COMMAND_TIMEOUT_MS: u64 = 100;
+pub const ST3215_TIMEOUT_MS: u64 = 20;
+pub const ST3215_COMMAND_TIMEOUT_MS: u64 = 20;
+pub const ST3215_SLOW_READ_WARN_MS: u128 = 10;
 
 const NO_COMMAND_SEARCH_DELAY_MS: u64 = 500;
 const MIN_TIME_BETWEEN_SEARCHES_MS: u64 = 100;
@@ -285,9 +286,9 @@ impl St3215Port {
             let cached_eeprom = eeprom_cache.lock().get(&motor_id).cloned();
 
             let read_result = if cached_eeprom.is_some() {
-                Self::read_motor_ram(port, motor_id).await
+                Self::read_motor_ram(port, motor_id, &bus_info.serial_number).await
             } else {
-                Self::read_motor_config(port, motor_id).await
+                Self::read_motor_config(port, motor_id, &bus_info.serial_number).await
             };
 
             match read_result {
@@ -466,6 +467,7 @@ impl St3215Port {
     async fn read_motor_config(
         port: &mut tokio_serial::SerialStream,
         motor_id: u8,
+        bus_serial: &str,
     ) -> Result<Bytes, protocol::Error> {
         let ram_end_addr = protocol::RamRegister::PresentCurrent.address()
             + protocol::RamRegister::PresentCurrent.size();
@@ -474,7 +476,13 @@ impl St3215Port {
             address: 0,
             length: ram_end_addr,
         };
-        match read_req.async_readwrite(port, ST3215_TIMEOUT_MS).await? {
+        let started = Instant::now();
+        let result = read_req.async_readwrite(port, ST3215_TIMEOUT_MS).await;
+        let elapsed_ms = started.elapsed().as_millis();
+        if elapsed_ms >= ST3215_SLOW_READ_WARN_MS {
+            warn!("ST3215 slow read_motor_config: bus={} motor={} elapsed={}ms", bus_serial, motor_id, elapsed_ms);
+        }
+        match result? {
             protocol::ST3215Response::Read { data, .. } => Ok(data),
             _ => unreachable!(),
         }
@@ -483,6 +491,7 @@ impl St3215Port {
     async fn read_motor_ram(
         port: &mut tokio_serial::SerialStream,
         motor_id: u8,
+        bus_serial: &str,
     ) -> Result<Bytes, protocol::Error> {
         let ram_start_addr = protocol::RamRegister::TorqueEnable.address();
         let ram_end_addr = protocol::RamRegister::PresentCurrent.address()
@@ -492,7 +501,13 @@ impl St3215Port {
             address: ram_start_addr,
             length: ram_end_addr - ram_start_addr,
         };
-        match read_req.async_readwrite(port, ST3215_TIMEOUT_MS).await? {
+        let started = Instant::now();
+        let result = read_req.async_readwrite(port, ST3215_TIMEOUT_MS).await;
+        let elapsed_ms = started.elapsed().as_millis();
+        if elapsed_ms >= ST3215_SLOW_READ_WARN_MS {
+            warn!("ST3215 slow read_motor_ram: bus={} motor={} elapsed={}ms", bus_serial, motor_id, elapsed_ms);
+        }
+        match result? {
             protocol::ST3215Response::Read { data, .. } => Ok(data),
             _ => unreachable!(),
         }

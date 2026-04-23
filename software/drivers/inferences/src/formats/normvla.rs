@@ -4,7 +4,7 @@ use normfs::NormFS;
 use normfs::UintN;
 use prost::Message;
 use bytes::Bytes;
-use st3215::protocol::{get_motor_position, get_motor_goal_position, get_motor_current, get_motor_velocity, normalize_motor_position, is_motor_error, is_torque_enabled};
+use st3215::protocol::{get_motor_position, get_motor_goal_position, get_motor_current, get_motor_velocity, normalize_motor_position, is_motor_error, is_torque_enabled, RamRegister, ServoError};
 use crate::proto::normvla;
 
 // Skip frame if timestamp diff > 100ms
@@ -347,9 +347,12 @@ fn parse_joints(
 
             // Check for motor error
             if is_motor_error(state_bytes) {
+                let status_addr = RamRegister::Status.address() as usize;
+                let status = state_bytes.get(status_addr).copied().unwrap_or(0);
+                let errors = ServoError::from_bits(status);
                 log::info!(
-                    "Skip: motor_error (bus={} motor={})",
-                    bus_serial, motor.id
+                    "Skip: motor_error (bus={} motor={} status=0x{:02X} {:?})",
+                    bus_serial, motor.id, status, errors
                 );
                 FRAME_STATS.lock().unwrap().skipped_motor_error += 1;
                 return None;
