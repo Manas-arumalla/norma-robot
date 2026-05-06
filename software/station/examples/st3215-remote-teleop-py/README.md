@@ -10,9 +10,9 @@ uv run python main.py \
     --leader-server   localhost      --leader-bus   5AB9068903 \
     --follower-server ab-rpi5.server --follower-bus 5AB9068471
 
-# One station, single bus on each side
+# Two stations, single bus on each side
 uv run python main.py \
-    --leader-server   ab-rpi5.server --leader-bus   auto \
+    --leader-server   localhost      --leader-bus   auto \
     --follower-server ab-rpi5.server --follower-bus auto
 ```
 
@@ -30,8 +30,8 @@ uv run python main.py \
 Once a second the loop logs per-bus health:
 
 ```
-leader@localhost:        freq=120.0 Hz age avg=12.4ms min=4.2ms max=27.0ms
-follower@ab-rpi5.server: freq=10.0  Hz age avg=58.1ms min=43.0ms max=98.0ms
+leader@localhost:        freq=20.0 Hz age avg=12.4ms min=4.2ms max=27.0ms
+follower@ab-rpi5.server: freq=20.0  Hz age avg=58.1ms min=43.0ms max=98.0ms
 ```
 
 - **freq**: inference frames received in the last second.
