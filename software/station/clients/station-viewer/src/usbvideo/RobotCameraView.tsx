@@ -62,7 +62,7 @@ const RobotCameraView = memo(function RobotCameraView({
               overlay="none"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-surface-secondary/70 px-2 py-1 text-xs font-mono text-text-label backdrop-blur-sm">
-              PiP: {formatCameraName(secondaryVideoSource)}
+              {formatCameraName(secondaryVideoSource)}
             </div>
           </div>
         )}

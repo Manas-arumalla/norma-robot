@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Long from "long";
+import { Camera } from "lucide-react";
 import { Link } from "react-router-dom";
 import { commandManager } from "../api/commands";
 import { FrameEntry } from "../api/frame-parser";
@@ -45,9 +46,9 @@ const BusCard: React.FC<BusCardProps> = ({
   mirroringState,
 }) => {
   const latencyHistoryRef = useRef<Map<string, LatencyReading[]>>(new Map());
+  const hasPrimaryVideoSourcePreferenceRef = useRef(false);
   const [primaryVideoSourceId, setPrimaryVideoSourceId] = useState<string | null>(null);
   const [secondaryVideoSourceId, setSecondaryVideoSourceId] = useState<string | null>(null);
-  const [hasPrimaryVideoSourcePreference, setHasPrimaryVideoSourcePreference] = useState(false);
   const [viewMode, setViewMode] = useState<RobotViewMode>("model");
   const [isWebControlled, setIsWebControlled] = useState(false);
 
@@ -88,10 +89,14 @@ const BusCard: React.FC<BusCardProps> = ({
   useEffect(() => {
     if (primaryVideoSourceId && !activeVideoSourceIds.includes(primaryVideoSourceId)) {
       setPrimaryVideoSourceId(null);
-      setHasPrimaryVideoSourcePreference(false);
+      hasPrimaryVideoSourcePreferenceRef.current = false;
     }
 
-    if (!primaryVideoSourceId && firstActiveVideoSourceId && !hasPrimaryVideoSourcePreference) {
+    if (
+      !primaryVideoSourceId &&
+      firstActiveVideoSourceId &&
+      !hasPrimaryVideoSourcePreferenceRef.current
+    ) {
       setPrimaryVideoSourceId(firstActiveVideoSourceId);
     }
 
@@ -104,14 +109,13 @@ const BusCard: React.FC<BusCardProps> = ({
   }, [
     activeVideoSourceIds,
     firstActiveVideoSourceId,
-    hasPrimaryVideoSourcePreference,
     primaryVideoSourceId,
     secondaryVideoSourceId,
   ]);
 
   const handlePrimaryVideoSourceChange = useCallback((sourceId: string | null) => {
     // Keep this sticky even for "None" so an explicit user clear is not auto-filled again.
-    setHasPrimaryVideoSourcePreference(true);
+    hasPrimaryVideoSourcePreferenceRef.current = true;
     setPrimaryVideoSourceId(sourceId);
     if (sourceId && sourceId === secondaryVideoSourceId) {
       setSecondaryVideoSourceId(null);
@@ -258,20 +262,24 @@ const BusCard: React.FC<BusCardProps> = ({
   const needsCalibration = hasMotors && (hasUnfrozenMotor || hasNarrowRange);
   const canRender3d = [6, 8].includes(bus.motors?.length || 0);
   const canShowCamera = activeVideoSources.length > 0;
+  const controlSourceWidthClass = viewMode === "camera" ? "max-w-[140px]" : "max-w-[180px]";
+  const cameraSelectWidthClass = viewMode === "camera" ? "max-w-[120px]" : "max-w-[180px]";
 
   return (
-    <div className="border border-border-default rounded-lg bg-surface-primary/50 min-w-[300px]">
+    <div className="min-w-0 border border-border-default rounded-lg bg-surface-primary/50">
       {/* Title Bar */}
-      <div className="bg-surface-secondary/50 px-4 py-2 rounded-t-lg flex flex-wrap gap-x-6 gap-y-2 border-b border-border-default items-start sm:items-center">
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+      <div className="bg-surface-secondary/50 px-4 py-2 rounded-t-lg flex flex-col gap-2 border-b border-border-default items-start">
+        <div className="flex w-full flex-wrap items-center gap-2">
           <span className="font-bold text-lg text-accent-data">
             #{bus.bus?.serialNumber}
           </span>
-          <div className="flex rounded-md border border-border-subtle bg-surface-primary p-0.5 text-xs font-bold uppercase tracking-wide">
+          <div className="flex rounded-md border border-border-subtle bg-surface-primary p-0.5">
             <button
               type="button"
               onClick={() => setViewMode("model")}
-              className={`rounded px-2 py-1 transition-colors ${viewMode === "model" ? "bg-accent-success-bg text-text-primary" : "text-text-muted hover:text-text-primary"}`}
+              className={`flex h-8 min-w-8 items-center justify-center rounded px-2 text-xs font-bold transition-colors ${viewMode === "model" ? "bg-accent-success-bg text-text-primary" : "text-text-muted hover:text-text-primary"}`}
+              title="3D view"
+              aria-label="3D view"
             >
               3D
             </button>
@@ -279,10 +287,11 @@ const BusCard: React.FC<BusCardProps> = ({
               type="button"
               onClick={() => setViewMode("camera")}
               disabled={!canShowCamera}
-              className={`rounded px-2 py-1 transition-colors disabled:cursor-not-allowed disabled:text-text-muted ${viewMode === "camera" ? "bg-accent-data text-surface-base" : "text-text-muted hover:text-text-primary"}`}
+              className={`flex h-8 w-8 items-center justify-center rounded transition-colors disabled:cursor-not-allowed disabled:text-text-muted ${viewMode === "camera" ? "bg-accent-data text-surface-base" : "text-text-muted hover:text-text-primary"}`}
               title={canShowCamera ? "Camera-first robot view" : "No active cameras"}
+              aria-label="Camera view"
             >
-              Camera
+              <Camera className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
           <select
@@ -292,7 +301,7 @@ const BusCard: React.FC<BusCardProps> = ({
                 : (currentMirror?.source?.id?.uniqueId ?? "")
             }
             onChange={(e) => handleControlSourceChange(e.target.value || null)}
-            className="block pl-3 pr-10 py-1 text-base border-border-subtle bg-surface-secondary text-text-primary focus:outline-none focus:ring-accent-success-deep focus:border-accent-success-deep sm:text-sm rounded-md max-w-[180px]"
+            className={`block min-w-0 ${controlSourceWidthClass} pl-3 pr-10 py-1 text-base border-border-subtle bg-surface-secondary text-text-primary focus:outline-none focus:ring-accent-success-deep focus:border-accent-success-deep sm:text-sm rounded-md`}
           >
             <option value="">(Self-controlled)</option>
             <option value="web-controlled">(Web-controlled)</option>
@@ -317,10 +326,10 @@ const BusCard: React.FC<BusCardProps> = ({
           <select
             value={primaryVideoSourceId ?? ""}
             onChange={(e) => handlePrimaryVideoSourceChange(e.target.value || null)}
-            className="block pl-3 pr-10 py-1 text-base border-border-subtle bg-surface-secondary text-text-primary focus:outline-none focus:ring-accent-success-deep focus:border-accent-success-deep sm:text-sm rounded-md max-w-[220px]"
+            className={`block min-w-0 ${cameraSelectWidthClass} pl-3 pr-10 py-1 text-base border-border-subtle bg-surface-secondary text-text-primary focus:outline-none focus:ring-accent-success-deep focus:border-accent-success-deep sm:text-sm rounded-md`}
             title="Main camera"
           >
-            <option value="">Main Cam: None</option>
+            <option value="">None</option>
             {activeVideoSources
               .filter((entry) => getVideoSourceId(entry) !== secondaryVideoSourceId)
               .map((entry) => {
@@ -332,7 +341,7 @@ const BusCard: React.FC<BusCardProps> = ({
                     value={sourceId}
                     title={label}
                   >
-                    Main: {label}
+                    {label}
                   </option>
                 );
               })}
@@ -341,10 +350,10 @@ const BusCard: React.FC<BusCardProps> = ({
             <select
               value={secondaryVideoSourceId ?? ""}
               onChange={(e) => handleSecondaryVideoSourceChange(e.target.value || null)}
-              className="block pl-3 pr-10 py-1 text-base border-border-subtle bg-surface-secondary text-text-primary focus:outline-none focus:ring-accent-success-deep focus:border-accent-success-deep sm:text-sm rounded-md max-w-[220px]"
+              className={`block min-w-0 ${cameraSelectWidthClass} basis-full pl-3 pr-10 py-1 text-base border-border-subtle bg-surface-secondary text-text-primary focus:outline-none focus:ring-accent-success-deep focus:border-accent-success-deep sm:text-sm rounded-md`}
               title="Picture-in-picture camera"
             >
-              <option value="">PIP Cam: None</option>
+              <option value="">None</option>
               {activeVideoSources
                 .filter((entry) => getVideoSourceId(entry) !== primaryVideoSourceId)
                 .map((entry) => {
@@ -356,7 +365,7 @@ const BusCard: React.FC<BusCardProps> = ({
                       value={sourceId}
                       title={label}
                     >
-                      PiP: {label}
+                      {label}
                     </option>
                   );
                 })}

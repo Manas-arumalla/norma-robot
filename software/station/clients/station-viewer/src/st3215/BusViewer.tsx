@@ -16,8 +16,8 @@ const BusViewer = memo(function BusViewer({ inferenceState, videoSources, mirror
   }
 
   return (
-    <div className="font-mono text-accent-success">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="w-full font-mono text-accent-success">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
         {inferenceState.buses.map((bus, busIndex) => (
           <BusCard
             key={busIndex}
