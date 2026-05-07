@@ -37,6 +37,15 @@ const BaseRobotRenderer = forwardRef<BaseRobotRendererRef, BaseRobotRendererProp
   const sceneRef = useRef<any>(null);
   const isInitializedRef = useRef(false);
 
+  const disposeMaterial = (material: THREE.Material) => {
+    Object.values(material).forEach((value) => {
+      if (value instanceof THREE.Texture) {
+        value.dispose();
+      }
+    });
+    material.dispose();
+  };
+
   const disposeObject3D = (object: THREE.Object3D | null) => {
     if (!object) return;
     object.traverse((child: any) => {
@@ -45,9 +54,9 @@ const BaseRobotRenderer = forwardRef<BaseRobotRendererRef, BaseRobotRendererProp
       }
       if (child.material) {
         if (Array.isArray(child.material)) {
-          child.material.forEach((material: any) => material.dispose());
+          child.material.forEach((material: THREE.Material) => disposeMaterial(material));
         } else {
-          child.material.dispose();
+          disposeMaterial(child.material);
         }
       }
     });
@@ -204,13 +213,14 @@ const BaseRobotRenderer = forwardRef<BaseRobotRendererRef, BaseRobotRendererProp
 
   useEffect(() => {
     if (!mountRef.current || isInitializedRef.current) return;
+    const mountNode = mountRef.current;
     isInitializedRef.current = true;
 
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(
       75,
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
+      mountNode.clientWidth / mountNode.clientHeight,
       0.1,
       1000
     );
@@ -218,10 +228,10 @@ const BaseRobotRenderer = forwardRef<BaseRobotRendererRef, BaseRobotRendererProp
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+    renderer.setSize(mountNode.clientWidth, mountNode.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
-    mountRef.current.appendChild(renderer.domElement);
+    mountNode.appendChild(renderer.domElement);
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
@@ -269,29 +279,32 @@ const BaseRobotRenderer = forwardRef<BaseRobotRendererRef, BaseRobotRendererProp
     animate();
 
     const resizeObserver = new ResizeObserver(() => {
-      if (sceneRef.current && mountRef.current) {
-        const { clientWidth, clientHeight } = mountRef.current;
+      if (sceneRef.current) {
+        const { clientWidth, clientHeight } = mountNode;
         sceneRef.current.renderer.setSize(clientWidth, clientHeight);
         sceneRef.current.camera.aspect = clientWidth / clientHeight;
         sceneRef.current.camera.updateProjectionMatrix();
       }
     });
 
-    if (mountRef.current) {
-      resizeObserver.observe(mountRef.current);
-    }
+    resizeObserver.observe(mountNode);
 
     return () => {
       resizeObserver.disconnect();
       if (sceneRef.current) {
-        cancelAnimationFrame(sceneRef.current.animationId);
-        if (sceneRef.current.robot) {
+        const currentScene = sceneRef.current;
+        cancelAnimationFrame(currentScene.animationId);
+        if (currentScene.robot) {
           cleanupRobot();
         }
-        sceneRef.current.controls.dispose();
-        sceneRef.current.renderer.dispose();
-        if (mountRef.current && sceneRef.current.renderer.domElement.parentNode) {
-          sceneRef.current.renderer.domElement.remove();
+        disposeObject3D(currentScene.scene);
+        currentScene.scene.clear();
+        currentScene.controls.dispose();
+        currentScene.renderer.renderLists.dispose();
+        currentScene.renderer.dispose();
+        currentScene.renderer.forceContextLoss();
+        if (currentScene.renderer.domElement.parentNode) {
+          currentScene.renderer.domElement.remove();
         }
         sceneRef.current = null;
         isInitializedRef.current = false;

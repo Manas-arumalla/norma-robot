@@ -394,6 +394,8 @@ const BusCard: React.FC<BusCardProps> = ({
           <RobotCameraView
             primaryVideoSource={primaryVideoSource}
             secondaryVideoSource={secondaryVideoSource}
+            primaryVideoSourceId={primaryVideoSourceId}
+            secondaryVideoSourceId={secondaryVideoSourceId}
             bus={bus}
             busIndex={busIndex}
             showMotorData={true}
@@ -407,7 +409,7 @@ const BusCard: React.FC<BusCardProps> = ({
             bus={bus}
             busIndex={busIndex}
             showMotorData={true}
-            selectedVideoSource={primaryVideoSource}
+            selectedVideoSourceId={primaryVideoSourceId}
             showCalibrateButton={true}
             needsCalibration={needsCalibration}
             isWebControlled={isWebControlled}
@@ -459,9 +461,9 @@ const BusCard: React.FC<BusCardProps> = ({
                 />
               </div>
             </div>
-            {primaryVideoSource && (
+            {primaryVideoSourceId && (
               <div className="absolute top-4 right-4 h-[200px] w-2/5 max-w-[520px] overflow-hidden rounded-lg border border-border-default bg-black shadow-lg pointer-events-auto">
-                <CameraViewer inferenceState={primaryVideoSource} className="h-full w-full" />
+                <CameraViewer sourceId={primaryVideoSourceId} className="h-full w-full" />
               </div>
             )}
           </>

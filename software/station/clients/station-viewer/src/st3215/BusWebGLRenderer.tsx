@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import { st3215, usbvideo } from '../api/proto';
+import { st3215 } from '../api/proto';
 import SO101Renderer from './SO101Renderer';
 import ElRobotRenderer from './ElRobotRenderer';
 import { BaseRobotRendererRef } from './BaseRobotRenderer';
@@ -14,7 +14,7 @@ interface BusWebGLRendererProps {
   showMotorData?: boolean;
   showCalibrateButton?: boolean;
   needsCalibration?: boolean;
-  selectedVideoSource?: usbvideo.IRxEnvelope;
+  selectedVideoSourceId?: string | null;
   isLeader?: boolean;
   inCalibrationView?: boolean;
   isWebControlled?: boolean;
@@ -33,7 +33,7 @@ const BusWebGLRendererComponent = forwardRef<BusWebGLRendererRef, BusWebGLRender
     },
   }));
 
-  const { bus, showMotorData, busIndex, isWebControlled, selectedVideoSource, showCalibrateButton, needsCalibration, inCalibrationView } = props;
+  const { bus, showMotorData, busIndex, isWebControlled, selectedVideoSourceId, showCalibrateButton, needsCalibration, inCalibrationView } = props;
 
   return (
     <div className="relative w-full h-full">
@@ -48,9 +48,9 @@ const BusWebGLRendererComponent = forwardRef<BusWebGLRendererRef, BusWebGLRender
             <MotorDataTable bus={bus} busIndex={busIndex} isWebControlled={isWebControlled} />
           </div>
         }
-        {selectedVideoSource && (
+        {selectedVideoSourceId && (
           <div className="absolute top-4 right-4 h-[200px] w-2/5 max-w-[520px] overflow-hidden rounded-lg border border-border-default bg-black shadow-lg pointer-events-auto">
-            <CameraViewer inferenceState={selectedVideoSource} className="h-full w-full" />
+            <CameraViewer sourceId={selectedVideoSourceId} className="h-full w-full" />
           </div>
         )}
         {showCalibrateButton && !inCalibrationView && needsCalibration && (

@@ -1,8 +1,9 @@
 import { FrameEntry } from '../api/frame-parser';
 import { usbvideo } from '../api/proto.js';
+import { getLiveCameraSourceId } from './live-camera-store';
 
 export function getVideoSourceId(entry: FrameEntry<usbvideo.IRxEnvelope>): string {
-  return entry.data.camera?.uniqueId || entry.queueId;
+  return getLiveCameraSourceId(entry.queueId, entry.data);
 }
 
 export function formatCameraName(source?: usbvideo.IRxEnvelope, fallback = 'No camera'): string {

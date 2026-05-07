@@ -8,6 +8,8 @@ import CameraViewer from './CameraViewer';
 interface RobotCameraViewProps {
   primaryVideoSource?: usbvideo.IRxEnvelope;
   secondaryVideoSource?: usbvideo.IRxEnvelope;
+  primaryVideoSourceId?: string | null;
+  secondaryVideoSourceId?: string | null;
   bus: st3215.InferenceState.IBusState;
   busIndex: number;
   isWebControlled?: boolean;
@@ -17,8 +19,9 @@ interface RobotCameraViewProps {
 }
 
 const RobotCameraView = memo(function RobotCameraView({
-  primaryVideoSource,
   secondaryVideoSource,
+  primaryVideoSourceId,
+  secondaryVideoSourceId,
   bus,
   busIndex,
   isWebControlled,
@@ -34,9 +37,9 @@ const RobotCameraView = memo(function RobotCameraView({
   return (
     <div className="flex flex-col w-full h-full min-h-0 overflow-hidden bg-black rounded-b-lg">
       <div className="relative min-h-0" style={{ flex: '1 1 auto' }}>
-        {primaryVideoSource ? (
+        {primaryVideoSourceId ? (
           <CameraViewer
-            inferenceState={primaryVideoSource}
+            sourceId={primaryVideoSourceId}
             className="h-full w-full"
             imageClassName="select-none"
             fit="contain"
@@ -52,10 +55,10 @@ const RobotCameraView = memo(function RobotCameraView({
           </div>
         )}
 
-        {secondaryVideoSource && (
+        {secondaryVideoSourceId && (
           <div className="absolute bottom-4 right-4 z-30 h-[160px] w-2/5 min-w-[220px] max-w-[360px] overflow-hidden rounded-lg border-2 border-border-default bg-surface-primary shadow-2xl">
             <CameraViewer
-              inferenceState={secondaryVideoSource}
+              sourceId={secondaryVideoSourceId}
               className="h-full w-full"
               imageClassName="select-none"
               fit="contain"
