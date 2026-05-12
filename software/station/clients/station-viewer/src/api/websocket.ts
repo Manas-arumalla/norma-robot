@@ -298,7 +298,10 @@ class WebSocketManager extends EventTarget {
 }
 
 
+// Use desktop preload API if available (Electron), otherwise derive from page host
+// With file:// protocol, window.location.host is empty — fall back to localhost
 const host = window.location.host;
-const webSocketManager = new WebSocketManager(`ws://${host}/api`);
+const wsUrl = window.stationDesktop?.backendUrl ?? (host ? `ws://${host}/api` : 'ws://127.0.0.1:8889/api');
+const webSocketManager = new WebSocketManager(wsUrl);
 
 export default webSocketManager;

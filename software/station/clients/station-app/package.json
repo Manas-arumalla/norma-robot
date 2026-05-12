@@ -1,0 +1,39 @@
+{
+  "name": "@normacore/station-app",
+  "version": "0.1.0-beta.6",
+  "description": "Desktop Electron wrapper for NormaCore station-viewer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/norma-core/norma-core.git",
+    "directory": "software/station/clients/station-app"
+  },
+  "main": "dist/main.js",
+  "scripts": {
+    "generate:version": "node scripts/generate-version.mjs",
+    "dev": "node scripts/generate-version.mjs && tsc && electron .",
+    "dev:tools": "node scripts/generate-version.mjs && tsc && electron . --devtools",
+    "build": "node scripts/generate-version.mjs && tsc",
+    "build:viewer": "cd ../station-viewer && yarn build",
+    "build:station": "cd ../../../.. && cargo build --release --package=station",
+    "clean:release": "rm -rf release",
+    "start": "yarn build:viewer && yarn build:station && yarn build && electron . --load-dist",
+    "package": "yarn clean:release && yarn build:viewer && yarn build:station && yarn build && electron-builder --config electron-builder.yml",
+    "package:mac": "yarn clean:release && yarn build:viewer && yarn build:station && yarn build && electron-builder --mac --config electron-builder.yml",
+    "package:linux": "yarn clean:release && yarn build:viewer && yarn build:station && yarn build && electron-builder --linux --config electron-builder.yml",
+    "lint": "oxlint src/",
+    "type-check": "node scripts/generate-version.mjs && tsc --noEmit"
+  },
+  "dependencies": {
+    "electron-window-state": "^5.0.3"
+  },
+  "devDependencies": {
+    "electron": "^41.5.0",
+    "electron-builder": "^26.0.0",
+    "oxlint": "^1.50.0",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
