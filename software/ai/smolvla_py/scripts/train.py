@@ -28,8 +28,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DATASETS = ROOT.parent / "datasets"
 CKPT_DIR = ROOT / "checkpoints"
 IMAGE_KEYS = ("observation.images.cam0", "observation.images.cam1")
-STATE_DIM = 6
-ACTION_DIM = 6
+STATE_DIM = 8
+ACTION_DIM = 8
 
 DEFAULT_PARQUETS = [DATASETS / "dataset.parquet"]
 

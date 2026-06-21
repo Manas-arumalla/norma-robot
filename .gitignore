@@ -3,3 +3,16 @@
 __pycache__
 # Local vendored JS package tarballs for offline installs.
 js-vendor/
+
+# Large binary files — datasets, model checkpoints, virtual envs
+datasets/
+software/ai/smolvla_py/checkpoints/
+software/ai/smolvla_py/.venv/
+software/ai/smolvla_py/smolvla.egg-info/
+software/ai/smolvla_py/cloudflared
+station_data/
+/station
+station-linux-amd64.tar.gz
+calibration-backup.zip
+dataset-mp4/
+dataset-generator/
