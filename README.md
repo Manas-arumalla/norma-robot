@@ -1,5 +1,10 @@
 # NORMA — Natural Object Recognition & Motion Automation
 
+> [!IMPORTANT]
+> 🏆 **Winner — "AI-Powered Robot Control" track, Berlin AI × Robotics Hackathon (HackLab Berlin, 2026).**
+> This fork contains our team's winning entry.
+> <!-- TODO(manas): add one line here on your specific contributions vs your teammate's -->
+
 > **Berlin AI × Robotics Hackathon · "AI-Powered Robot Control" track**
 > *"Teaching robots to see, think, and move — with just a few demonstrations."*
 
